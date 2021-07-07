@@ -1,7 +1,5 @@
 import { Connection } from '../SettingStore'
 import log4js from 'log4js';
-import { SSHConnection } from 'node-ssh-forward'
-import { readFileSync } from 'fs'
 
 const logger = log4js.getLogger()
 
@@ -44,22 +42,17 @@ export default abstract class AbstractClient {
       */
       const tables = await this.getTables(input)
       const all_fields = await this.getFields(input)
-      const col_from_raw = columns.map(v => this.toColumnFromRawField(v))
+      const col_from_raw = all_fields.map(v => this.toColumnFromRawField(v))
       schema = await Promise.all(
-        tables.map((v) => this.getColumns(v).then(columns => ({
+        tables.map((v) => ({
           database: this.settings.database,
           tableName: v,
-          columns: columns.map(v => this.toColumnFromRawField(v)) }
+          columns: col_from_raw // Each dataset in results associated with all field results
+          }
         )))
-      )
     } catch (e) {
       logger.error(e)
       throw e
-    } finally {
-      this.disconnect()
-      if (sshConnection) {
-        sshConnection.shutdown()
-      }
     }
     return schema
   }

@@ -91,12 +91,14 @@ export function createServerWithConnection(connection: IConnection) {
           logger.error(e)
         }
         try {
+          /*
           const client = getDatabaseClient(
             SettingStore.getInstance().getSetting()
           )
+          
           schema = await client.getSchema()
           logger.debug("get schema")
-          logger.debug(JSON.stringify(schema))
+          logger.debug(JSON.stringify(schema))*/
         } catch (e) {
           logger.error("failed to get schema info")
           if (e instanceof RequireSqlite3Error) {
@@ -144,12 +146,25 @@ export function createServerWithConnection(connection: IConnection) {
     }
   })
 
-  connection.onCompletion((docParams: TextDocumentPositionParams): CompletionItem[] => {
+  connection.onCompletion(async (docParams: TextDocumentPositionParams): Promise<CompletionItem[]> => {
     let text = documents.get(docParams.textDocument.uri)?.getText()
     if (!text) {
       return []
     }
-  	logger.debug(text || '')
+    /**** */
+    try {
+      const client = getDatabaseClient(
+        SettingStore.getInstance().getSetting()
+      )
+      
+      schema = await client.getSchema(text /* ?? */)
+      logger.debug("get schema")
+      logger.debug(JSON.stringify(schema))
+      logger.debug(text || '')
+    } catch(e) {
+      logger.log(e)
+    }
+    /**** */
   	const candidates = complete(text, {
   		line: docParams.position.line,
   		column: docParams.position.character
