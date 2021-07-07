@@ -25,9 +25,15 @@ export type Schema = Table[]
 export default abstract class AbstractClient {
   connection: any
 
+  abstract getTables(query: string): Promise<string[]>
+  abstract getFields(query: string): Promise<RawField[]>
+  abstract DefaultPort: number
+  abstract DefaultHost: string
+  abstract DefaultUser: string
+
   constructor(protected settings: Connection) {}
 
-  async getSchema(input: String): Promise<Schema> {
+  async getSchema(input: string): Promise<Schema> {
     let schema: Schema = []
     try {
       /*
