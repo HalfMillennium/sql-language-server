@@ -27,42 +27,18 @@ export default abstract class AbstractClient {
 
   constructor(protected settings: Connection) {}
 
-  abstract connect(): Promise<boolean> | boolean
-  abstract disconnect(): void
-  abstract getTables(): Promise<string[]>
-  abstract getColumns(tableName: string): Promise<RawField[]>
-  abstract DefaultPort: number
-  abstract DefaultHost: string
-  abstract DefaultUser: string
-
-  async getSchema(): Promise<Schema> {
+  async getSchema(input: String): Promise<Schema> {
     let schema: Schema = []
-    const sshConnection =
-      this.settings.ssh?.remoteHost ? new SSHConnection({
-        endHost: this.settings.ssh.remoteHost,
-        username: this.settings.ssh.user,
-        privateKey: readFileSync(this.settings.ssh.identityFile || `${process.env.HOME}/.ssh/id_rsa`),
-        passphrase: this.settings.ssh.passphrase || ''
-      }) : null
-    if (sshConnection) {
-      await sshConnection.forward({
-        fromPort: this.settings.port || this.DefaultPort,
-        toPort: this.settings.ssh?.dbPort || this.DefaultPort,
-        toHost: this.settings.ssh?.dbHost || '127.0.0.1'
-      }).then(v => {
-        if (v) {
-          logger.error('Failed to ssh remote server')
-          logger.error(v)
-        }
-        return []
-      })
-    }
-    if (!(await this.connect())) {
-      logger.error('AbstractClinet.getSchema: failed to connect database')
-      return []
-    }
     try {
-      const tables = await this.getTables()
+      /*
+        Problem: In the default use case, each table is (naturally)
+        associated with its relevant fields, and this is how the schema is populated.
+
+        Solution: Associate each table (from result) with all fields (from result).
+      */
+      const tables = await this.getTables(input)
+      const all_fields = await this.getFields(input)
+      const col_from_raw = columns.map(v => this.toColumnFromRawField(v))
       schema = await Promise.all(
         tables.map((v) => this.getColumns(v).then(columns => ({
           database: this.settings.database,

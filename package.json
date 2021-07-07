@@ -87,7 +87,12 @@
     "wait-on": "^5.0.1"
   },
   "dependencies": {
+    "axios": "^0.21.1",
     "electron-rebuild": "^1.11.0",
     "sqlite3": "^4.2.0"
+  },
+  "homepage": "https://github.com/joe-re/sql-language-server#readme",
+  "directories": {
+    "example": "example"
   }
 }
